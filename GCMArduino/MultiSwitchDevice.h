@@ -48,30 +48,30 @@ class MultiSwitchDevice : public SwitchDevice
 			memcpy(modes, _modes, min(sizeof(modes), sizeof(_modes)));
 	 }
 
-	 virtual void Init()
-	 {
+	virtual uint8_t Initialize()
+	{
 		Serial.print("Multi Init: ");
 		Serial.println(GetName());
-		SwitchDevice::Init();
 		currentMode = -1;
-	 }
+		return SwitchDevice::Initialize();		
+	}
 
-	 virtual void Update()
-	 {
-		SwitchDevice::Update();
-
+	virtual uint8_t Update()
+	{
 		for (int d = 0; d < 3; d++)
 		{
 			modes[d].modeSwitch->Update();
 		}
-	 }
+		 
+		return SwitchDevice::Update();
+	}
 
 	virtual bool SetOn(bool on = true)
 	{
 		if (!on)
 			TurnOffOtherSwitches();
 
-		return SwitchDevice::SetOn(on);
+		return SwitchDevice::TurnOn(on);
 	}
 
 	void SetCurrentMode(uint8_t mode)
@@ -87,14 +87,14 @@ class MultiSwitchDevice : public SwitchDevice
 			if (IsOn() && currentMode == mode - 1)
 				return;
 
-			modes[currentMode].modeSwitch->SetOn(false);
+			modes[currentMode].modeSwitch->TurnOn(false);
 			currentMode = mode - 1;
 			if (!IsOn())
-				SetOn();
-			modes[currentMode].modeSwitch->SetOn();
+				TurnOn();
+			modes[currentMode].modeSwitch->TurnOn();
 		}
 		else if (IsOn())
-			SetOn(false);
+			TurnOn(false);
 	}
 
 	virtual const char* GetCurrentModeName() const
@@ -111,7 +111,7 @@ protected:
 		{
 			SwitchDevice* device = modes[id].modeSwitch;
 			if (device->IsOn())
-				device->SetOn(false);
+				device->TurnOn(false);
 		}
 	}
 };

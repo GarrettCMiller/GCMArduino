@@ -11,11 +11,15 @@
 
 #define MAX_BRIGHTNESS 255
 
-#include "InputCommandListener.h"
+#include "ArduinoDevice.h"
 #include "RangedValue.h"
-#include "TimedDevice.h"
+#include "ArduinoTimer.h"
 
-class LED_RGB : public IInputCommandListener
+/// <summary>
+/// The RGB LED on the Bluno Accessory Shield. Can be turned on/off with brightness adjustment, set to a solid color
+/// or blinked a particular color a certain number of times (<c>blinkCount</c>), every <c>blinkDelay</c> ms
+/// </summary>
+class LED_RGB : public IArduinoDevice
 {
 public:
 	enum ELEDState
@@ -89,8 +93,8 @@ protected:
 		blinkDelay = RangedValue16("Blink Delay", flashDelayTimer.timerLength, 100, 5000);
 	}
 
-	void Init();
-	void Update();
+	uint8_t Initialize();
+	uint8_t Update();
 
 	void flashColor(uint8_t red, uint8_t green, uint8_t blue, EFlashLength flashLength, int times)
 	{

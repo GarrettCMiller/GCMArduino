@@ -9,9 +9,11 @@
 	#include "WProgram.h"
 #endif
 
-#include "Buzzer.h"
-#include "InputCommandListener.h"
+#include "ArduinoDevice.h"
 
+/// <summary>
+/// The musical notes, as indexed by number of steps above A0, NOT COMPLETE
+/// </summary>
 enum EMusicalNotes
 {
 	noteA0, noteASharp0, noteBFlat0 = noteASharp0,
@@ -75,42 +77,82 @@ enum EMusicalNotes
 	noteC8
 };
 
-class BlunoBuzzer : public Buzzer, public IInputCommandListener
+/// <summary>
+/// Represents the buzzer attatched to the board
+/// </summary>
+class BlunoBuzzer : public IArduinoDevice
 {
+	BlunoBuzzer(BlunoBuzzer&& ctrArg);
+	BlunoBuzzer(const BlunoBuzzer& ctrArg);
+
+	static const uint8_t buzzerPin = 8;
  protected:
 	 bool isPlaying = false;
 
  public:
-	void Init()
+	BlunoBuzzer()
+	{
+	}
+
+	/// <summary>
+	/// Sets the pin mode and immediately turns it off (just to be safe)
+	/// </summary>
+	virtual uint8_t Initialize()
 	{
 		pinMode(buzzerPin, OUTPUT);
 		digitalWrite(buzzerPin, LOW);
-		noTone(buzzerPin);
+		Stop();
 		isPlaying = false;
+		return 0;
 	}
 
+	virtual uint8_t Update()
+	{
+		return 0;
+	}
+
+	/// <summary>
+	/// Plays a certain frequency via <c>tone()</c> for a specified duration
+	/// </summary>
+	/// <param name="freq">The frequency to play</param>
+	/// <param name="duration">The duration to play for</param>
 	void Play(uint16_t freq, uint32_t duration = 0)
 	{
 		//isPlaying = true;
 		tone(buzzerPin, freq, duration);
 	}
 
+	/// <summary>
+	/// Plays a certain musical note, for a specified duration
+	/// </summary>
+	/// <param name="note">The note to play, see <see cref="EMusicalNotes"/></param>
+	/// <param name="noteLength">The duration to play for</param>
 	void Play(EMusicalNotes note, uint16_t noteLength = 200)
 	{
 		//isPlaying = true;
-		tone(buzzerPin, playNote(note), noteLength/* * tempoScale*/);
+		tone(buzzerPin, convertNoteToFrequency(note), noteLength/* * tempoScale*/);
 	}
 
+	/// <summary>
+	/// Stop any sound from coming out of the device
+	/// </summary>
 	void Stop()
 	{
 		noTone(buzzerPin);
 	}
 
+	/// <summary>
+	/// Whether or not the buzzer is playing. DO NOT USE right now, not accurate at all
+	/// </summary>
+	/// <returns></returns>
 	bool IsPlaying() const
 	{
 		return isPlaying;
 	}
 
+	/// <summary>
+	/// Plays (supposedly) the sound from the original Legend Of Zelda when you uncover a secret.
+	/// </summary>
 	void PlayZeldaSound()
 	{
 		uint8_t noteLength = 150;
@@ -141,7 +183,7 @@ class BlunoBuzzer : public Buzzer, public IInputCommandListener
 	}
 
 private:
-	double playNote(EMusicalNotes note)
+	double convertNoteToFrequency(EMusicalNotes note)
 	{
 		static const double powerA = 1.059463094359;
 		static const double OneTwelvth = 1.0 / 12.0;

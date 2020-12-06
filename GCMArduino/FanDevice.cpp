@@ -4,14 +4,14 @@
 
 #include "FanDevice.h"
 
-void FanDevice::Init()
+uint8_t FanDevice::Initialize()
 {
-	SwitchDevice::Init();
+	return SwitchDevice::Initialize();
 }
 
-void FanDevice::Update()
+uint8_t FanDevice::Update()
 {
-	SwitchDevice::Update();
+	return SwitchDevice::Update();
 }
 
 //FanDeviceClass FanDevice;

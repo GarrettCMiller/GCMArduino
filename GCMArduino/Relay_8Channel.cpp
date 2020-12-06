@@ -4,20 +4,25 @@
 
 #include "Relay_8Channel.h"
 
-void Relay_8Channel::Init()
+uint8_t Relay_8Channel::Initialize()
 {
 	for (int r = 0; r < 8; r++)
 	{
-		switchDevice[r]->Init();
+		if (switchDevice[r]->Initialize() != 0)
+			return -1;
 	}
+
+	return 0;
 }
 
-void Relay_8Channel::Update()
+uint8_t Relay_8Channel::Update()
 {
 	for (int r = 0; r < 8; r++)
 	{
 		switchDevice[r]->Update();
 	}
+
+	return 0;
 }
 
 //Relay_8ChannelClass Relay_8Channel;

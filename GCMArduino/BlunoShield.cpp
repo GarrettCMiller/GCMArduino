@@ -3,7 +3,7 @@
 // 
 
 #include "BlunoShield.h"
-#include "TimedDevice.h"
+#include "ArduinoTimer.h"
 #include "OLEDMenu.h"
 
 BlunoShield blunoShield;
@@ -84,7 +84,11 @@ void BlunoShield::Init()
 
 	InitLED();
 
-	//bleSerial.begin();
+	InitBuzzer();
+
+	InitJoystick();
+
+	InitKnob();
 }
 
 void BlunoShield::Update()
@@ -104,7 +108,7 @@ void BlunoShield::Update()
 	UpdateLED();
 }
 
-float BlunoShield::c2f(float tempC)
+float BlunoShield::c2f(float tempC) const
 {
 	return tempC * 9.0f / 5.0f + 32.0f;
 }
@@ -122,7 +126,7 @@ void BlunoShield::InitRelay()
 {
 	Serial.println(F("Initializing on-board relay..."));
 
-	myRelay.Init();
+	myRelay.Initialize();
 
 	Serial.println(F("Successfully initialized relay!"));
 }
@@ -131,7 +135,7 @@ void BlunoShield::InitLED()
 {
 	Serial.println(F("Initializing on-board LED..."));
 
-	myLED.Init();
+	myLED.Initialize();
 	myLED.setColor(0, 0, 0);
 	myLED.turnOff();
 
@@ -140,25 +144,22 @@ void BlunoShield::InitLED()
 
 void BlunoShield::InitOLED()
 {
-	Serial.println(F("Initializing on-board OLED screen..."));
+	oled.Initialize();
+}
 
-	pinMode(DC, OUTPUT);
-	digitalWrite(DC, LOW);             //DC=0
-	pinMode(RES, OUTPUT);
-	digitalWrite(RES, HIGH);   delay(100);
-	digitalWrite(RES, LOW);    delay(100);
-	digitalWrite(RES, HIGH);   delay(100);
+void BlunoShield::InitBuzzer()
+{
+	GetBuzzer().Initialize();
+}
 
-	if (oled.begin() != 0)
-	{
-		oled.setColorIndex(1);
-		oled.drawRFrame(0, 0, 127, 34, 5);
-		Serial.println(F("Successfully initialized OLED screen!"));
-	}
-	else
-	{
-		Serial.println(F("!!!!!!!*****Failed to initialize OLED screen!"));
-	}
+void BlunoShield::InitJoystick()
+{
+	myJoy.Initialize();
+}
+
+void BlunoShield::InitKnob()
+{
+	myKnob.Initialize();
 }
 
 void BlunoShield::InitMenuPages(OLEDMenu& menu)
@@ -471,7 +472,7 @@ void SetRelayState(bool on)
 {
 	BlunoShield* pShield = BlunoShield::pInstance;
 	if (pShield != NULL)
-		pShield->GetRelay().SetOn(on);
+		pShield->GetRelay().TurnOn(on);
 }
 void SetRelayName(String newName)
 {

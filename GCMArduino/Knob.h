@@ -29,9 +29,9 @@ https://github.com/DFRobot/DFRobot_BlunoAccess
  #include "WProgram.h"
 #endif
 
-#include "InputCommandListener.h"
+#include "ArduinoDevice.h"
 
-class Knob : public IInputCommandListener
+class Knob : public IArduinoDevice
 {
 	int16_t knob = 0, prevknob = -3;
 	bool knobChanged = false;
@@ -43,7 +43,7 @@ public:
 		return knob;
 	}
 
-	void Update()
+	virtual uint8_t Update()
 	{
 		knob = readKnob();
 		delay(10);
@@ -55,6 +55,14 @@ public:
 		}
 		else
 			knobChanged = false;
+
+		return 0;
+	}
+
+	virtual uint8_t Initialize()
+	{
+		pinMode(knobPin, INPUT);
+		return 0;
 	}
 
 	bool KnobChanged() const

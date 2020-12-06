@@ -30,19 +30,27 @@ https://github.com/DFRobot/DFRobot_BlunoAccessory
 
 #define joystickPin 0
 
-#include "InputCommandListener.h"
+#include "ArduinoDevice.h"
 
-class Joystick : public IInputCommandListener
+class Joystick : public IArduinoDevice
 {
 private:
 	boolean joystickChange;
 	int8_t joyStick = 0, prevJoyStick = 4;
 
 public:
-	void Update()
+	virtual uint8_t Initialize()
+	{
+		pinMode(joystickPin, INPUT);
+		return 0;
+	}
+
+	virtual uint8_t Update()
 	{
 		if (joystickAvailable())
 			joyStick = readJoystick();
+
+		return 0;
 	}
 
 	uint8_t GetValue()

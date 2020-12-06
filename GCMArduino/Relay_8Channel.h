@@ -29,8 +29,8 @@ class Relay_8Channel
 	 };
 
  public:
-	void Init();
-	void Update();
+	uint8_t Initialize();
+	uint8_t Update();
 };
 
 //extern Relay_8ChannelClass Relay_8Channel;

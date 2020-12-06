@@ -17,8 +17,8 @@ class FanDevice : public SwitchDevice
 	 int minTempToStart = 75;
 
  public:
-	virtual void Init();
-	virtual void Update();
+	virtual uint8_t Initialize();
+	virtual uint8_t Update();
 };
 
 //extern FanDeviceClass FanDevice;

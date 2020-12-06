@@ -70,45 +70,54 @@ enum EJoystickValues
 	eJoy_Push	= 5
 };
 
-#define DHTPIN 2
-#define DHTTYPE DHT11
+#ifdef MAKE_SHIELD_OBJECTS_PUBLIC
 
-#define RES 6    //LED reset pin PIN6
-#define DC 7     //LED DC pin PIN3
+extern PlainProtocol myBLUNO;
 
-//extern PlainProtocol myBLUNO;
-//
-////BlunoAccessory constructor,for setting the OLED
-//extern BlunoAccessory oled;
-//
-////Buzzer constructor,for setting the buzzer
-//extern BlunoBuzzer myBuzzer;
-//
-////Relay constructor,for setting the Relay
-//extern Relay myRelay;
-//
-////Joystick constructor,for setting the joyStick
-//extern Joystick myJoy;
-//
-////Knob constructor,for setting the knob
-//extern Knob myKnob;
-//
-////Rgb constructor,for setting the RGB
-//extern Rgb myLED;
-//
-////DHT constructor,for setting the temperature, humidity
-//extern DHT dht;
+//BlunoAccessory constructor,for setting the OLED
+extern BlunoAccessory oled;
+
+//Buzzer constructor,for setting the buzzer
+extern BlunoBuzzer myBuzzer;
+
+//Relay constructor,for setting the Relay
+extern SwitchDevice myRelay;
+
+//Joystick constructor,for setting the joyStick
+extern Joystick myJoy;
+
+//Knob constructor,for setting the knob
+extern Knob myKnob;
+
+//Rgb constructor,for setting the RGB
+extern Rgb myLED;
+
+//DHT constructor,for setting the temperature, humidity
+extern DHT dht;
+
+#endif
 
 class OLEDMenu;
 
+/// <summary>
+/// A wrapper class for the DFRobot Bluno Accessory Shield. One step initialization for getting access to and controlling
+/// the components attatched to the shield, as well as offering much additional functionality.
+/// </summary>
 class BlunoShield
 {
-public:
-	typedef void (*DrawCallback)(OLED& pOled);
-	typedef void (*InputCallback)(PlainProtocol& input);
+	BlunoShield(BlunoShield&& ctrArg);
+	BlunoShield(const BlunoShield& ctrArg);
 
-	DrawCallback currentDrawCallback;
-	InputCallback currentInputCallback;
+public:
+	/// <summary>
+	/// Defines a function that can be called during the OLED render loop to render custom content
+	/// </summary>
+	typedef void (*DrawCallback)(OLED& pOled);
+
+	/// <summary>
+	/// Defines a function that can be called during the UpdatePlainProtocol function to listen to and process PlainProtocol data
+	/// </summary>
+	typedef void (*InputCallback)(PlainProtocol& input);
 
 	enum DrawMode
 	{
@@ -133,6 +142,8 @@ public:
 	static BlunoShield* pInstance;
 
 protected:
+	DrawCallback currentDrawCallback;
+	InputCallback currentInputCallback;
 	uint8_t data[6];
 	bool tempChanged = false;
 	String messageText;
@@ -152,6 +163,12 @@ protected:
 	bool firstreading;
 
  public:
+	/// <summary>
+	/// The default (only, really) ctor
+	/// </summary>
+	/// <param name="newDrawCallback"></param>
+	/// <param name="newInputCallback"></param>
+	/// <param name="newIPM"></param>
 	BlunoShield(DrawCallback newDrawCallback = NULL, InputCallback newInputCallback = NULL,
 				InputProcessingMode newIPM = eIPM_Both)
 		: currentDrawCallback(newDrawCallback), currentInputCallback(newInputCallback),
@@ -168,44 +185,51 @@ protected:
 			ipMode = eIPM_Internal;
 	}
 
+	/// <summary>
+	/// Sets the internal message text (which can be displayed or read as necessary)
+	/// </summary>
+	/// <param name="str"></param>
 	void SetMessageText(String str)
 	{
 		messageText = str;
 	}
 
+	/// <summary>
+	/// Gets the internal message text
+	/// </summary>
+	/// <returns></returns>
 	String GetMessageText() const
 	{
 		return messageText;
 	}
 
+	/// <summary>
+	/// Initializes the class and all components on the Bluno Accessory Shield
+	/// </summary>
 	void Init();
 
-	void InitDHT();
-
-	void InitRelay();
-
-	void InitLED();
-
+	/// <summary>
+	/// Initializes the internal menu pages
+	/// </summary>
+	/// <param name="menu">The main menu object</param>
 	void InitMenuPages(OLEDMenu& menu);
-
-	float readTemperature(bool S = false);
-	float readHumidity(void);
-
-	void drawTempAndHumidity(void);
-	bool CheckDHT();
+	
+	/// <summary>
+	/// Updates the board and all components on the Bluno Accessory Shield
+	/// </summary>
 	void Update();
 
-	void UpdateKnob();
+	float c2f(float) const;
 
-	float c2f(float);
+	void SetDrawCallback(DrawCallback newDrawCallback)
+	{
+		currentDrawCallback = newDrawCallback;
+	}
 
-	void UpdatePlainProtocol();
-	void ProcessPlainProtocol();
-
-	void UpdateOLED();
-	void UpdateJoystick();
-	void UpdateLED();
-	void UpdateRelay();
+	void SetInputCallback(InputCallback newInputCallback)
+	{
+		currentInputCallback = newInputCallback;
+	}
 
 	uint8_t GetJoystickValue() const
 	{
@@ -265,14 +289,55 @@ protected:
 	LED_RGB& GetLED();
 	//SimpleDHT11& GetDHT();
 
+	/// <summary>
+	/// Utility function to draw a filled meter that represents the value of the
+	/// knob in relation to it's min and max
+	/// </summary>
+	/// <param name="x">The x coordinate</param>
+	/// <param name="y">The y coordinate</param>
+	/// <param name="w">The width in pixels</param>
+	/// <param name="h">The height in pixels</param>
+	/// <returns>The x coordinate of the far-right edge of the filled part of the meter</returns>
 	uint8_t drawKnobMeter(u8g_uint_t x, u8g_uint_t y, u8g_uint_t w, u8g_uint_t h);
+	
+	/// <summary>
+	/// Utility function to draw a filled meter
+	/// </summary>
+	/// <param name="val">The value to represent the filled part of the meter</param>
+	/// <param name="max">The maximum that represents the far-right part of the meter, AKA full</param>
+	/// <param name="x">The x coordinate</param>
+	/// <param name="y">The y coordinate</param>
+	/// <param name="w">The width in pixels</param>
+	/// <param name="h">The height in pixels</param>
+	/// <returns>The x coordinate of the far-right edge of the filled part of the meter</returns>
 	uint8_t drawMeter(uint16_t val, uint16_t max, u8g_uint_t x, u8g_uint_t y, u8g_uint_t w, u8g_uint_t h);
 
-protected:
+private:
 	bool dhtRead(void);
 	void dhtBegin(void);
 
 	void InitOLED();
+	void InitDHT();
+	void InitRelay();
+	void InitLED();
+	void InitBuzzer();
+	void InitJoystick();
+	void InitKnob();
+
+	float readTemperature(bool S = false);
+	float readHumidity(void);
+
+	void drawTempAndHumidity(void);
+	bool CheckDHT();
+
+	void UpdatePlainProtocol();
+	void ProcessPlainProtocol();
+
+	void UpdateOLED();
+	void UpdateJoystick();
+	void UpdateLED();
+	void UpdateRelay();
+	void UpdateKnob();
 };
 
 extern BlunoShield blunoShield;
