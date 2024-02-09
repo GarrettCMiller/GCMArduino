@@ -9,53 +9,48 @@
 	#include "WProgram.h"
 #endif
 
-#include "SwitchDevice.h"
+#include "ToggleSwitch.h"
+#include "LED_RGB.h"
 
-#define DEFAULT_LEDTOGGLESWITCH_MODE	true
-
-class LEDToggleSwitch : public SwitchDevice	//SwitchDevice controls LED illumination on switch
+class LEDToggleSwitch : public ToggleSwitch
 {
  protected:
-	 uint8_t pinInput;
+	LED led;
 
  public:
-	 LEDToggleSwitch()
-	 {	 }
+	LEDToggleSwitch(uint8_t pinSwitch, uint8_t pinLED, String name = "LEDToggle")
+		: ToggleSwitch(pinSwitch, name), led(pinLED)
+	{
 
-	 LEDToggleSwitch(uint8_t pinLED, uint8_t _pinInput)
-		 : SwitchDevice(pinLED),
-			pinInput(_pinInput)
-	 {
-		 pinMode(pinInput, INPUT);
-	 }
+	}
 
-	 LEDToggleSwitch(uint8_t pinLED, uint8_t _pinInput, const char* _name,
-					bool onByDefault = DEFAULT_LEDTOGGLESWITCH_MODE,
-					ESwitchDeviceMode deviceMode = ESwitchDeviceMode::eSDM_ManualOnly)
-		 : SwitchDevice(pinLED, _name, onByDefault, deviceMode),
-			pinInput(_pinInput)
-	 {
-		 pinMode(pinInput, INPUT);
-	 }
-	 
-	 virtual void Init()
-	 {
-		 SwitchDevice::Init();
-	 }
+	virtual uint8_t Initialize()
+	{
+		led.Initialize();
+		return ToggleSwitch::Initialize();
+	}
 
-	 virtual void Update()
-	 {
-		 digitalWrite(pinNumber, isOn ? HIGH : LOW);
-		 //SwitchDevice::Update();
-	 }
+	virtual uint8_t Update()
+	{
+		led.Update();
+		return ToggleSwitch::Update();
+	}
 
-	 bool SwitchIsFlippedUp() const
-	 {
-		 return digitalRead(pinInput) == HIGH;
-	 }
+	virtual void ProcessInput(PlainProtocol& input)
+	{
+		ToggleSwitch::ProcessInput(input);
+	}
+
+	void TurnLEDOn(bool on = true)
+	{
+		if (on)
+			led.TurnOn();
+		else
+			led.TurnOff();
+	}
 };
 
-//extern LEDToggleSwitch LEDToggleSwitch;
+//extern LEDToggleSwitch ledToggleSwitch;
 
 #endif
 
