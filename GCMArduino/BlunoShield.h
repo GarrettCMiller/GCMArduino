@@ -3,6 +3,9 @@
 #ifndef _BLUNOSHIELD_h
 #define _BLUNOSHIELD_h
 
+#define USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
+#pragma region Includes
 
 #ifdef ARDUINO_ARCH_ARC32
 #include <BLEAttribute.h>
@@ -29,7 +32,17 @@
 #include "Joystick.h"
 #include "Knob.h"
 #include "BlunoOLED.h"
-//#include "DHT.h"
+#include "ArduinoDevice.h"
+
+#ifndef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+#include "DHT.h"
+#endif // !USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
+#pragma endregion
+
+#pragma region Misc. Preprocessor Definitions
+
+//These #define's come straight from the original Bluno Shield Accessory library
 
 //need to keep track of. 2 * number bits + extra
 #define MAXTIMINGS 85
@@ -51,14 +64,19 @@
 #define blueLedPin 3
 
 #define RES 6    //LED reset pin PIN6
-#define DC 7     //LED DC pin PIN3
+#define DC 7     //LED DC pin PIN/*3*/7
 
-//#define RIGHT 1
-//#define UP 2
-//#define LEFT 3
-//#define DOWN 4
-//#define PUSH 5
-//#define MID 0
+#pragma endregion
+
+#pragma region Global Macros
+
+//A simple swap macro, I may eventually replace this
+//with a typesafe templated function instead...
+#define Swap(_T, a, b)		{ _T t; t = a; a = b; b = t; }
+
+#pragma endregion
+
+#pragma region Joystick Values
 
 enum EJoystickValues
 {
@@ -70,12 +88,18 @@ enum EJoystickValues
 	eJoy_Push	= 5
 };
 
+#pragma endregion
+
+// Uncomment the following line to be able to access the devices attatched to Bluno Accessory Shield "publicly",
+// instead of only being able to access those devices via <c>BlunoShield</c> member functions.
+//#define MAKE_SHIELD_OBJECTS_PUBLIC
+
 #ifdef MAKE_SHIELD_OBJECTS_PUBLIC
 
 extern PlainProtocol myBLUNO;
 
 //BlunoAccessory constructor,for setting the OLED
-extern BlunoAccessory oled;
+extern OLED oled;
 
 //Buzzer constructor,for setting the buzzer
 extern BlunoBuzzer myBuzzer;
@@ -90,10 +114,14 @@ extern Joystick myJoy;
 extern Knob myKnob;
 
 //Rgb constructor,for setting the RGB
-extern Rgb myLED;
+extern LED_RGB myLED;
+
+#ifndef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
 
 //DHT constructor,for setting the temperature, humidity
 extern DHT dht;
+
+#endif // !USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
 
 #endif
 
@@ -101,12 +129,13 @@ class OLEDMenu;
 
 /// <summary>
 /// A wrapper class for the DFRobot Bluno Accessory Shield. One step initialization for getting access to and controlling
-/// the components attatched to the shield, as well as offering much additional functionality.
+/// the components attached to the shield, as well as offering much additional functionality.
 /// </summary>
-class BlunoShield
+class BlunoShield : public ArduinoDevice
 {
-	BlunoShield(BlunoShield&& ctrArg);
-	BlunoShield(const BlunoShield& ctrArg);
+	//invalid ctors
+	BlunoShield(BlunoShield&& ctrArg);			// empty move ctor
+	BlunoShield(const BlunoShield& ctrArg);		// empty copy ctor
 
 public:
 	/// <summary>
@@ -171,7 +200,8 @@ protected:
 	/// <param name="newIPM"></param>
 	BlunoShield(DrawCallback newDrawCallback = NULL, InputCallback newInputCallback = NULL,
 				InputProcessingMode newIPM = eIPM_Both)
-		: currentDrawCallback(newDrawCallback), currentInputCallback(newInputCallback),
+		: ArduinoDevice("BlunoShield"),
+		currentDrawCallback(newDrawCallback), currentInputCallback(newInputCallback),
 		drawMode(eDM_Default), ipMode(eIPM_Internal), messageText("System Ready")
 	{
 		pInstance = this;
@@ -206,7 +236,7 @@ protected:
 	/// <summary>
 	/// Initializes the class and all components on the Bluno Accessory Shield
 	/// </summary>
-	void Init();
+	virtual uint8_t Initialize();
 
 	/// <summary>
 	/// Initializes the internal menu pages
@@ -217,9 +247,7 @@ protected:
 	/// <summary>
 	/// Updates the board and all components on the Bluno Accessory Shield
 	/// </summary>
-	void Update();
-
-	float c2f(float) const;
+	virtual uint8_t Update();
 
 	void SetDrawCallback(DrawCallback newDrawCallback)
 	{
@@ -231,12 +259,12 @@ protected:
 		currentInputCallback = newInputCallback;
 	}
 
-	uint8_t GetJoystickValue() const
+	uint8_t GetJoystickValue() /*const*/
 	{
 		return GetJoystick().GetValue();
 	}
 
-	uint16_t GetKnobValue() const
+	uint16_t GetKnobValue() /*const*/
 	{
 		return GetKnob().GetValue();
 	}
@@ -287,11 +315,15 @@ protected:
 	Joystick& GetJoystick();
 	Knob& GetKnob();
 	LED_RGB& GetLED();
+#ifndef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+	DHT& GetDHT();
+#endif // !USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
 	//SimpleDHT11& GetDHT();
 
 	/// <summary>
 	/// Utility function to draw a filled meter that represents the value of the
-	/// knob in relation to it's min and max
+	/// knob in relation to its min and max
 	/// </summary>
 	/// <param name="x">The x coordinate</param>
 	/// <param name="y">The y coordinate</param>
@@ -338,6 +370,11 @@ private:
 	void UpdateLED();
 	void UpdateRelay();
 	void UpdateKnob();
+
+	virtual void ProcessInput(PlainProtocol& input)
+	{
+
+	}
 };
 
 extern BlunoShield blunoShield;
@@ -351,11 +388,15 @@ extern OLEDPage relaySettingsPage;
 extern MenuOption ledSettingsPageOptions[];
 extern OLEDPage ledSettingsPage;
 
-//extern MenuOption buzzerSettingsPageOptions[];
-//extern OLEDPage buzzerSettingsPage;
+extern MenuOption buzzerSettingsPageOptions[];
+extern OLEDPage buzzerSettingsPage;
 
 extern MenuOption mainSettingsPageOptions[];
 extern OLEDPage mainSettingsPage;
+
+extern OLEDPage mainPage;
+
+extern OLEDMenu menu;
 
 #endif
 

@@ -12,7 +12,7 @@
 #include "ArduinoTimer.h"
 #include "RelaySwitch.h"
 
-//Rather arbitrarily defined
+//Rather arbitrarily defined (and currently
 #define MAX_SWITCH_DEVICES_PER_BOARD 32
 
 /// <summary>
@@ -24,8 +24,8 @@ class SwitchDevice : public RelaySwitch
 {
 private:
 	SwitchDevice();								//private default ctor
-	SwitchDevice(SwitchDevice&& ctrArg);		//private move ctor
-	SwitchDevice(const SwitchDevice& ctrArg);	//private copy ctor
+	//SwitchDevice(SwitchDevice&& ctrArg);		//private move ctor
+	//SwitchDevice(const SwitchDevice& ctrArg);	//private copy ctor
 
 //public:
 	//static SwitchDevice* allDevices[MAX_SWITCH_DEVICES_PER_BOARD];
@@ -33,7 +33,8 @@ private:
 
 public:
 	/// <summary>
-	/// Whether the device is turned on, turned off or both by events, or not, which only calls to <c>TurnOn()</c> will change the status
+	/// Whether the device is turned on, turned off, or, both, by events, or not,
+	/// which only calls to <c>TurnOn()</c> will change the status
 	/// </summary>
 	enum ESwitchDeviceMode
 	{
@@ -53,10 +54,13 @@ public:
 		eSDE_Timer,
 
 		eSDE_Temperature,
-		eSDE_Humidity
+		eSDE_Humidity,
+
+		eSDE_Other
 	};
 
-	ArduinoTimer timer;
+	ArduinoTimer timerOn;
+	ArduinoTimer timerOff;
 	uint8_t timesWoken = 0;
 
 protected:
@@ -73,10 +77,26 @@ public:
 	/// <param name="timerLength">The length of the timer (whether for turning on, off or both)</param>
 	/// <param name="onByDefault">Whether or not the device is turned on at the beginning of the sketch</param>
 	/// <param name="deviceMode">The initial device mode</param>
-	SwitchDevice(uint8_t pin, const char* _name, unsigned long timerLength = 5 TMINUTES, bool onByDefault = DEFAULT_RELAY_MODE, ESwitchDeviceMode deviceMode = ESwitchDeviceMode::eSDM_ManualOnly)
+	SwitchDevice(uint8_t pin, const char* _name,
+		unsigned long timerLength = 10 TMINUTES,
+		bool onByDefault = DEFAULT_RELAY_MODE,
+		ESwitchDeviceMode deviceMode = ESwitchDeviceMode::eSDM_ManualOnly)
 		: RelaySwitch(pin, _name, onByDefault), currentSwitchMode(deviceMode)
 	{
-		SetTimerPeriod(timerLength);
+		//Serial.println("SWITCH");
+		SetTimerOnPeriod(timerLength);
+	}
+
+	/// <summary>
+	/// Creates a switch device
+	/// </summary>
+	/// <param name="pin">The pin the device is linked to</param>
+	/// <param name="_name">The name of the device</param>
+	/// <param name="deviceMode">The initial device mode</param>
+	SwitchDevice(uint8_t pin, const char* _name, ESwitchDeviceMode deviceMode)
+		: SwitchDevice(pin, _name)
+	{
+		currentSwitchMode = deviceMode;
 	}
 
 	/// <summary>
@@ -86,7 +106,8 @@ public:
 	/// <returns>Whether or not the device is on after setting the new mode</returns>
 	virtual bool TurnOn(bool on = true)
 	{
-		timer.Reset();
+		timerOn.Reset();
+		//Serial.println(timerOn.timerLength);
 		return RelaySwitch::TurnOn(on);
 	}
 
@@ -94,18 +115,36 @@ public:
 	/// Sets the period (length) of the internal timer
 	/// </summary>
 	/// <param name="time">The length of time in milliseconds</param>
-	void SetTimerPeriod(unsigned long time)
+	virtual void SetTimerOnPeriod(unsigned long time)
 	{
-		timer.SetTimerLength(time);
+		timerOn.SetTimerLength(time);
 	}
 
 	/// <summary>
 	/// Gets the period (length) of the internal timer
 	/// </summary>
 	/// <returns>The length of time in milliseconds</returns>
-	unsigned long GetTimerPeriod() const
+	unsigned long GetTimerOnPeriod() const
 	{
-		return timer.timerLength;
+		return timerOn.timerLength;
+	}
+
+	/// <summary>
+	/// Sets the period (length) of the internal OFF timer
+	/// </summary>
+	/// <param name="time">The length of time in milliseconds</param>
+	virtual void SetTimerOffPeriod(unsigned long time)
+	{
+		timerOff.SetTimerLength(time);
+	}
+
+	/// <summary>
+	/// Gets the period (length) of the internal timer
+	/// </summary>
+	/// <returns>The length of time in milliseconds</returns>
+	unsigned long GetTimerOffPeriod() const
+	{
+		return timerOff.timerLength;
 	}
 
 	/// <summary>
@@ -115,7 +154,7 @@ public:
 	long GetRunningTime() const
 	{
 		if (IsOn())
-			return timer.GetTimeRunning();
+			return timerOn.GetTimeRunning();
 		return -1;
 	}
 
@@ -126,7 +165,7 @@ public:
 	long GetOffTime() const
 	{
 		if (!IsOn())
-			return timer.GetTimeRunning();
+			return timerOff.GetTimeRunning();
 		return -1;
 	}
 
@@ -143,7 +182,7 @@ public:
 	/// Gets the name, in String format, of the current mode
 	/// </summary>
 	/// <returns>The name, in String format, of the current mode</returns>
-	virtual const char* GetCurrentModeName() const
+	virtual String GetCurrentModeName() const
 	{
 		return RelaySwitch::GetCurrentModeName();
 	}
@@ -190,10 +229,18 @@ public:
 	/// </summary>
 	virtual uint8_t Update()
 	{
-		if (IsOn() && eventOff == eSDE_Timer && timer.IsReady())
-			TurnOn(false);
-		else if (!IsOn() && eventOn == eSDE_Timer && timer.IsReady())
-			TurnOn();
+		if (IsTimed() && timerOn.IsReady())
+		{
+			if (IsOn() && eventOff == eSDE_Timer)
+			{
+				Serial.print(F("Timing device \""));
+				Serial.print(this->GetName());
+				Serial.print(F("\" off..."));
+				TurnOn(false);
+			}
+			else if (!IsOn() && eventOn == eSDE_Timer)
+				TurnOn();
+		}
 
 		return RelaySwitch::Update();
 	}

@@ -9,7 +9,9 @@
 	#include "WProgram.h"
 #endif
 
-#define DEBUG_STACK
+//#define DEBUG_STACK
+
+#define MAX_STACK_SIZE	8
 
 #ifdef DEBUG_STACK
 class OLEDPage;
@@ -18,7 +20,7 @@ class OLEDPage;
 template <class _Type>
 class Stack
 {
-	_Type stack[8];
+	_Type stack[MAX_STACK_SIZE];
 	uint8_t pos;
 
 public:
@@ -27,16 +29,29 @@ public:
 #ifdef  DEBUG_STACK
 		//Serial.println("Stack constructor");
 #endif //  DEBUG_STACK
-		memset(stack, 0, sizeof(_Type) * 8);
+		memset(stack, 0, sizeof(_Type) * MAX_STACK_SIZE);
 		pos = 0;
 	}
 
 	void Push(_Type obj)
 	{
+#ifdef  DEBUG_STACK
+		if (Serial)
+		{
+			Serial.print("Pre-push:");
+			Serial.println(pos);
+
+			if (pos > MAX_STACK_SIZE)
+				Serial.println("BAD INDEX!");
+		}
+#endif
 		stack[pos++] = obj;
 #ifdef  DEBUG_STACK
-		Serial.print("Pushed object #"); Serial.print(pos); Serial.println(" onto the stack.");
-		Serial.print("\tObject: (parent of "); Serial.println(static_cast<OLEDPage*>(obj)->GetOption(0));
+		if (Serial)
+		{
+			Serial.print("Pushed object #"); Serial.print(pos); Serial.println(" onto the stack.");
+		}
+		//Serial.print("\tObject: (parent of "); Serial.println(((OLEDPage*)(obj))->GetOption(0));
 #endif //  DEBUG_STACK
 	}
 

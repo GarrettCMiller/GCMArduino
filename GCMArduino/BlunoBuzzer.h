@@ -80,7 +80,7 @@ enum EMusicalNotes
 /// <summary>
 /// Represents the buzzer attatched to the board
 /// </summary>
-class BlunoBuzzer : public IArduinoDevice
+class BlunoBuzzer : public ArduinoDevice
 {
 	BlunoBuzzer(BlunoBuzzer&& ctrArg);
 	BlunoBuzzer(const BlunoBuzzer& ctrArg);
@@ -91,7 +91,9 @@ class BlunoBuzzer : public IArduinoDevice
 
  public:
 	BlunoBuzzer()
+		: ArduinoDevice(buzzerPin, "Buzzer")
 	{
+		//Serial.println("BUZZER");
 	}
 
 	/// <summary>
@@ -99,7 +101,7 @@ class BlunoBuzzer : public IArduinoDevice
 	/// </summary>
 	virtual uint8_t Initialize()
 	{
-		pinMode(buzzerPin, OUTPUT);
+		//pinMode(buzzerPin, OUTPUT);
 		digitalWrite(buzzerPin, LOW);
 		Stop();
 		isPlaying = false;

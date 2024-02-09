@@ -19,9 +19,9 @@ class IInputCommandListener
 {
 public:
 	/// <summary>
-	/// The abstract (and only) function required by a child class by this class.
+	/// The abstract (and only) function required by an implementation of this interface.
 	/// </summary>
-	/// <param name="input">A reference to the PlainProtocol object in use by the Bluno-board</param>
+	/// <param name="input">A reference to the PlainProtocol (serial) object in use by the Bluno-board</param>
 	virtual void ProcessInput(PlainProtocol& input) = 0;
 };
 

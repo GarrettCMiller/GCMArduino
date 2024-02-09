@@ -32,13 +32,19 @@ https://github.com/DFRobot/DFRobot_BlunoAccessory
 
 #include "ArduinoDevice.h"
 
-class Joystick : public IArduinoDevice
+class Joystick : public ArduinoDevice
 {
 private:
 	boolean joystickChange;
 	int8_t joyStick = 0, prevJoyStick = 4;
 
 public:
+	Joystick()
+		: ArduinoDevice(joystickPin, "Joystick")
+	{
+		//Serial.println("$$$JOYSTICK");
+	}
+
 	virtual uint8_t Initialize()
 	{
 		pinMode(joystickPin, INPUT);

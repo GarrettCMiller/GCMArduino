@@ -40,9 +40,9 @@ BSD license, all text above must be included in any redistribution
 	#include "WProgram.h"
 #endif
 
-//#include "LED_RGB.h"
+#include "ArduinoDevice.h"
 
-class FingerprintReaderClass
+class FingerprintReader : IArduinoDevice
 {
 public:
 	enum EReaderState
@@ -52,8 +52,8 @@ public:
 	};
 
  protected:
-	 const uint8_t defaultInPin = 2;
-	 const uint8_t defaultOutPin = 3;
+	 static const uint8_t defaultInPin = 2;
+	 static const uint8_t defaultOutPin = 3;
 
 	 uint8_t pinInput;
 	 uint8_t pinOutput;
@@ -70,19 +70,20 @@ public:
 	 EReaderState currentState;
 
 public:
-	FingerprintReaderClass()
+	FingerprintReader(uint8_t inputPin = defaultInPin, uint8_t outputPin = defaultOutPin)
+		: pinInput(inputPin), pinOutput(outputPin)
 	{
-		pinInput = defaultInPin;
-		pinOutput = defaultOutPin;
+		/*pinInput = defaultInPin;
+		pinOutput = defaultOutPin;*/
 	}
 
-	FingerprintReaderClass(uint8_t pinIn, uint8_t pinOut)
+	/*FingerprintReader(uint8_t pinIn, uint8_t pinOut)
 	{
 		pinInput = pinIn;
 		pinOutput = pinOut;
-	}
+	}*/
 
-	~FingerprintReaderClass()
+	~FingerprintReader()
 	{
 		//delete mySerial;
 		delete finger;
@@ -98,8 +99,8 @@ public:
 		return currentState == eRS_Reading;
 	}
 
-	void init();
-	void loop();
+	virtual uint8_t Initialize();
+	virtual uint8_t Update();
 };
 
 #endif

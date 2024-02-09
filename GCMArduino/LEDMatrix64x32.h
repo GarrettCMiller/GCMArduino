@@ -9,7 +9,7 @@
 	#include "WProgram.h"
 #endif
 
-#include <RGBmatrixPanel.h>
+//#include <RGBmatrixPanel.h>
 
 // Most of the signal pins are configurable, but the CLK pin has some
 // special constraints.  On 8-bit AVR boards it must be on PORTB...
@@ -30,18 +30,18 @@
 #define C   A10
 #define D   A11
 
-class LEDMatrix64x32 : public RGBmatrixPanel
+class LEDMatrix64x32 //: public RGBmatrixPanel
 {
 public:
 	LEDMatrix64x32()
-		: RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, false, 64)
+		//: RGBmatrixPanel(A, B, C, D, CLK, LAT, OE, false, 64)
 	{
 
 	}
 
 	void Init()
 	{
-		begin();
+		//begin();
 	}
 };
 

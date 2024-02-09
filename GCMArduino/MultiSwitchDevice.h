@@ -97,7 +97,7 @@ class MultiSwitchDevice : public SwitchDevice
 			TurnOn(false);
 	}
 
-	virtual const char* GetCurrentModeName() const
+	virtual String GetCurrentModeName() const
 	{
 		if (IsOn())
 			return modes[currentMode].name;

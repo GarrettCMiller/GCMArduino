@@ -5,36 +5,74 @@
 #include "BlunoShield.h"
 #include "ArduinoTimer.h"
 #include "OLEDMenu.h"
+#include "TemperatureSensor.h"
 
+#define DUAL_ESP_MEGA
+
+#ifdef DUAL_ESP_MEGA
+	#define PLAIN_PROTOCOL_SERIAL	Serial3
+#else
+	#define PLAIN_PROTOCOL_SERIAL	Serial
+#endif
+
+#pragma region Globals
+
+/// <summary>
+/// The ONE and ONLY BlunoShield object
+/// </summary>
 BlunoShield blunoShield;
 
+/// <summary>
+/// The Singleton pointer referring to the ONE and ONLY BlunoShield pointer
+/// </summary>
 BlunoShield* BlunoShield::pInstance = NULL;
 
-///////////////////////////////////////////////////////////////////////
+/// <summary>
+/// The Serial->PlainProtocol interface class
+/// </summary>
+PlainProtocol bleSerial(PLAIN_PROTOCOL_SERIAL, 115200);
 
-PlainProtocol bleSerial(Serial, 115200);
-
-//BlunoAccessory constructor,for setting the pOled
+/// <summary>
+/// BlunoAccessory constructor for setting the pOled
+/// </summary>
 OLED oled;
 
-//Buzzer constructor,for setting the buzzer
+/// <summary>
+/// Buzzer constructor for setting the buzzer
+/// </summary>
 BlunoBuzzer myBuzzer;
 
-//Relay constructor,for setting the Relay
+/// <summary>
+/// Relay constructor for setting the Relay
+/// </summary>
 SwitchDevice myRelay(relayPin, "Relay");
 
-//Joystick constructor,for setting the joyStick
+/// <summary>
+/// Joystick constructor for setting the joyStick
+/// </summary>
 Joystick myJoy;
 
-//Knob constructor,for setting the knob
+/// <summary>
+/// Knob constructor for setting the knob
+/// </summary>
 Knob myKnob;
 
-//Rgb constructor,for setting the RGB
+/// <summary>
+/// RGB constructor for setting the RGB
+/// </summary>
 LED_RGB myLED;
 
+#ifndef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
 //DHT constructor,for setting the temperature, humidity
-//DHT dht(DHTPIN, DHTTYPE);
+DHT dht(dhtPin, dhtType);
 //SimpleDHT11 dht;
+
+#endif // !USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
+#pragma endregion
+
+#pragma region Global Object Accessors
 
 PlainProtocol& BlunoShield::GetProtocol()
 {
@@ -71,14 +109,33 @@ LED_RGB& BlunoShield::GetLED()
 	return myLED;
 }
 
+#ifndef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
+DHT& BlunoShield::GetDHT()
+{
+	return dht;
+}
+
+#endif // !USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
+
+#pragma endregion
+
 ArduinoTimer oledTimer(50, true);
 
 ///////////////////////////////////////////////////////////////////////
-void BlunoShield::Init()
+#pragma region BlunoShield methods
+
+uint8_t BlunoShield::Initialize()
 {
+	Serial.println(F("BlunoShield::Initialize() begin..."));
+
 	InitOLED();
 
+#ifdef USE_OWN_DHT_CODE_INSTEAD_OF_LIBRARY
 	InitDHT();
+#else
+	GetDHT().
+#endif
 
 	InitRelay();
 
@@ -89,9 +146,13 @@ void BlunoShield::Init()
 	InitJoystick();
 
 	InitKnob();
+
+	Serial.println(F("BlunoShield::Initialize() end"));
+
+	return 0;
 }
 
-void BlunoShield::Update()
+uint8_t BlunoShield::Update()
 {
 	CheckDHT();
 
@@ -106,40 +167,39 @@ void BlunoShield::Update()
 	UpdatePlainProtocol();
 
 	UpdateLED();
+
+	return 0;
 }
 
-float BlunoShield::c2f(float tempC) const
-{
-	return tempC * 9.0f / 5.0f + 32.0f;
-}
+#pragma region Initialization Methods
 
 void BlunoShield::InitDHT()
 {
-	Serial.println(F("Initializing on-board DHT sensor..."));
+	Serial.println(F("\tInitializing on-board DHT sensor..."));
 
 	dhtBegin();
 
-	Serial.println(F("Successfully initialized DHT sensor!"));
+	Serial.println(F("\tSuccessfully initialized DHT sensor!"));
 }
 
 void BlunoShield::InitRelay()
 {
-	Serial.println(F("Initializing on-board relay..."));
+	Serial.println(F("\tInitializing on-board relay..."));
 
 	myRelay.Initialize();
 
-	Serial.println(F("Successfully initialized relay!"));
+	Serial.println(F("\tSuccessfully initialized relay!"));
 }
 
 void BlunoShield::InitLED()
 {
-	Serial.println(F("Initializing on-board LED..."));
+	Serial.println(F("\tInitializing on-board LED..."));
 
 	myLED.Initialize();
-	myLED.setColor(0, 0, 0);
-	myLED.turnOff();
+	myLED.SetColor(0, 0, 0);
+	myLED.TurnOff();
 
-	Serial.println(F("Successfully initialized LED!"));
+	Serial.println(F("\tSuccessfully initialized LED!"));
 }
 
 void BlunoShield::InitOLED()
@@ -149,26 +209,50 @@ void BlunoShield::InitOLED()
 
 void BlunoShield::InitBuzzer()
 {
+	Serial.println(F("\tInitializing buzzer..."));
+
 	GetBuzzer().Initialize();
+
+	Serial.println(F("\tSuccessfully initialized buzzer!"));
 }
 
 void BlunoShield::InitJoystick()
 {
+	Serial.println(F("\tInitializing joystck..."));
+
 	myJoy.Initialize();
+
+	Serial.println(F("\tSuccessfuully initialized joystick!"));
 }
 
 void BlunoShield::InitKnob()
 {
+	Serial.println(F("\tInitializing knob..."));
+
 	myKnob.Initialize();
+
+	Serial.println(F("\tSuccessfully initialized knob!"));
 }
 
 void BlunoShield::InitMenuPages(OLEDMenu& menu)
 {
+	Serial.println(F("Initializing root menu pages..."));
+	
+	/*Serial.print("InitMenuPages: ");
+	Serial.println(int(&menu), HEX);*/
+	
+	mainPage.Init(menu);
 	relaySettingsPage.Init(menu);
 	ledSettingsPage.Init(menu);
-	//buzzerSettingsPage.Init(menu);
+	buzzerSettingsPage.Init(menu);
 	mainSettingsPage.Init(menu);
+
+	Serial.println(F("Successfully initialized root menu pages!"));
 }
+
+#pragma endregion
+
+#pragma region DHT
 
 bool BlunoShield::dhtRead(void)
 {
@@ -253,26 +337,6 @@ void BlunoShield::dhtBegin(void)
 	firstreading = true;
 }
 
-void BlunoShield::drawTempAndHumidity(void)           //Display pOled variable characters
-{
-	Serial.println("Draw screen");
-	oled.setFont(u8g_font_helvB24);
-	oled.disableCursor();
-	oled.drawRFrame(0, 0, 127, 34, 5);
-	oled.setPrintPos(3, 29);	//set the print position
-	oled.print(temperature);
-	oled.write(0xB0);			//degree symbol
-
-	oled.setPrintPos(61, 29);
-	oled.print(humidity);		//show the humidity on pOled
-	oled.print(F("%"));
-
-	oled.setFont(u8g_font_helvB10);
-	oled.setPrintPos(0, 60);
-	oled.print(messageText);
-	//drawKnobMeter(0, 35, 127, 63 - 34);
-}
-
 float BlunoShield::readTemperature(bool S /*= false*/)
 {
 	float f;
@@ -301,7 +365,9 @@ float BlunoShield::readTemperature(bool S /*= false*/)
 			return f;
 		}
 	}
+	
 	Serial.println(F("Read fail"));
+	
 	return NAN;
 }
 
@@ -324,9 +390,15 @@ float BlunoShield::readHumidity(void)
 			return f;
 		}
 	}
+	
 	Serial.print(F("Read fail"));
+	
 	return NAN;
 }
+
+#pragma endregion
+
+#pragma region Update
 
 bool BlunoShield::CheckDHT()
 {
@@ -361,28 +433,36 @@ void BlunoShield::UpdateOLED()
 {
 	if (oledTimer.IsReady())
 	{
+		//Mandatory first call before rendering to OLED
 		oled.firstPage();
 		
+		//Begin loop on 1st page
 		do
 		{
 			switch (drawMode)
 			{
 				case eDM_TempAndHumidity:
+				{
 					drawTempAndHumidity();
+				}
 					break;
 
 				case eDM_Custom:
+				{
 					if (currentDrawCallback != NULL)
 						currentDrawCallback(oled);
 					else
 						drawTempAndHumidity();
+				}
 					break;
 
 				default:
+				{
 					Serial.println(F("Invalid draw mode selected!"));
+				}
 			}
 
-		} while (oled.nextPage());
+		} while (oled.nextPage()); //If there are more pages to draw, keep cycling
 	}
 }
 
@@ -409,7 +489,7 @@ void BlunoShield::UpdateKnob()
 void BlunoShield::UpdatePlainProtocol()
 {
 	//Serial.println("Processing input update-pre");
-	//if (bleSerial.available())
+	if (bleSerial.receiveFrame())
 	{
 		//Serial.println("Processing input update");
 		switch (ipMode)
@@ -440,7 +520,7 @@ void BlunoShield::UpdatePlainProtocol()
 
 void BlunoShield::ProcessPlainProtocol()
 {
-	if (bleSerial.available())
+	//if (bleSerial.receiveCommand())
 	{
 		GetOLED().ProcessInput(bleSerial);
 		GetLED().ProcessInput(bleSerial);
@@ -450,6 +530,10 @@ void BlunoShield::ProcessPlainProtocol()
 		GetKnob().ProcessInput(bleSerial);
 	}
 }
+
+#pragma endregion
+
+#pragma region Draw Methods
 
 uint8_t BlunoShield::drawKnobMeter(u8g_uint_t x, u8g_uint_t y, u8g_uint_t w, u8g_uint_t h)
 {
@@ -464,68 +548,169 @@ uint8_t BlunoShield::drawMeter(uint16_t val, uint16_t max, u8g_uint_t x, u8g_uin
 	return width - (x + 1);
 }
 
+void BlunoShield::drawTempAndHumidity(void)           //Display pOled variable characters
+{
+	//Serial.println("Draw screen");
+	oled.setFont(u8g_font_helvB24);
+	oled.disableCursor();
+	oled.drawRFrame(0, 0, 127, 34, 5);
+	oled.setPrintPos(3, 29);	//set the print position
+	oled.print(temperature);
+	oled.write(0xB0);			//degree symbol
+
+	oled.setPrintPos(61, 29);
+	oled.print(humidity);		//show the humidity on pOled
+	oled.print(F("%"));
+
+	oled.setFont(u8g_font_helvB10);
+	oled.setPrintPos(0, 60);
+	oled.print(messageText);
+	//drawKnobMeter(0, 35, 127, 63 - 34);
+}
+
+#pragma endregion
+
+#pragma endregion
+/////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////
+#pragma region Built-In Menus
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
+#pragma region Relay Settings
+
+#pragma region Callbacks
 
 void SetRelayState(bool on)
 {
+	Serial.print(F("Turning relay ")); Serial.println(on ? F("on") : F("off"));
 	BlunoShield* pShield = BlunoShield::pInstance;
 	if (pShield != NULL)
 		pShield->GetRelay().TurnOn(on);
 }
+
 void SetRelayName(String newName)
 {
 	//myRelay.GetName
 }
 
-RangedValueB relayValue = RangedValueB("Relay State", SetRelayState);
-RangedString relayName = RangedString("Relay Name", SetRelayName);
+void SetRelayTimerLength(uint16_t newTimerLength)
+{
+	Serial.print(F("Setting new timer length: "));
+	Serial.println(newTimerLength);
+	BlunoShield* pShield = BlunoShield::pInstance;
+	if (pShield != NULL)
+		pShield->GetRelay().timerOn.SetTimerLength(newTimerLength);
+}
+
+void SetRelayMode(uint8_t newMode)
+{
+	Serial.println(F("Setting mode..."));
+}
+
+#pragma endregion
+
+#pragma region RangedValues
+
+RangedValueB relayValue = RangedValueB("State", SetRelayState);
+RangedString relayName = RangedString("Name", SetRelayName);
+RangedValueU8 relayMode = RangedValueU8("Mode", SetRelayMode, 0, 3);
+RangedValueU16 relayTimerLength = RangedValueU16("Timer Length", SetRelayTimerLength, 0, 60 TMINUTES);
+
+#pragma endregion
+
+#pragma region Menu and suboptions
 
 MenuOption relaySettingsPageOptions[] =
 {
 	MenuOption("Name", relayName),
 	MenuOption("State", relayValue),
+	MenuOption("Mode", relayMode),
+	MenuOption("Timer Length", relayTimerLength),
+	MenuOption("Timer Value", myRelay.timerOn),
 };
 
 OLEDPage relaySettingsPage("Relay Settings", MenuOptionCount(relaySettingsPageOptions), relaySettingsPageOptions);
 
+#pragma endregion
+
+#pragma endregion
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
+#pragma region LED Settings
+
 MenuOption ledSettingsPageOptions[] =
 {
-	MenuOption("Red", myLED.valueRed),
-	MenuOption("Green", myLED.valueGreen),
-	MenuOption("Blue", myLED.valueBlue),
-	MenuOption("Flash Delay", myLED.blinkDelay),
-	MenuOption("Brightness", myLED.brightness),
-	MenuOption("Blink Count", myLED.blinkCount),
+	MenuOption("Red", myLED.ledRed.value),
+	MenuOption("Green", myLED.ledGreen.value),
+	MenuOption("Blue", myLED.ledBlue.value),
+	//MenuOption("Flash Delay", myLED.blinkDelay),
+	//MenuOption("Brightness", myLED.brightness),
+	//MenuOption("Blink Count", myLED.blinkCount),
 };
 
 OLEDPage ledSettingsPage("LED Settings", MenuOptionCount(ledSettingsPageOptions), ledSettingsPageOptions);
 
-/////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////
-//void PlayTestSound()
-//{
-//	myBuzzer.PlayZeldaSound();
-//}
-//
-//MenuOption buzzerSettingsPageOptions[] =
-//{
-//	MenuOption("Test Buzzer", PlayTestSound),
-//};
-
-//OLEDPage buzzerSettingsPage(MenuOptionCount(buzzerSettingsPageOptions), buzzerSettingsPageOptions);
+#pragma endregion
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
+#pragma region Buzzer Settings
+
+void PlayTestSound()
+{
+	myBuzzer.PlayZeldaSound();
+}
+
+MenuOption buzzerSettingsPageOptions[] =
+{
+	MenuOption("Test Buzzer", PlayTestSound),
+};
+
+OLEDPage buzzerSettingsPage("Buzzer Settings", MenuOptionCount(buzzerSettingsPageOptions), buzzerSettingsPageOptions);
+
+#pragma endregion
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+#pragma region Main Settings Page
 
 MenuOption mainSettingsPageOptions[] =
 {
 	MenuOption("LED Settings", &ledSettingsPage),
 	MenuOption("Relay Settings", &relaySettingsPage),
-	//MenuOption("Buzzer Settings", &buzzerSettingsPage),
+	MenuOption("Buzzer Settings", &buzzerSettingsPage),
 };
 
 OLEDPage mainSettingsPage("Shield Settings", MenuOptionCount(mainSettingsPageOptions), mainSettingsPageOptions);
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+#pragma region Main Menu Page
+//The main menu page options
+MenuOption mainPageOptions[] =
+{
+	MenuOption("Shield Settings",	&mainSettingsPage)
+};
+
+// The main menu page that is activated when the user
+// presses the joystick and "exits" the default screen mode.
+OLEDPage mainPage("Main Menu", MenuOptionCount(mainPageOptions), mainPageOptions);
+
+#pragma endregion
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+#pragma region Menu
+
+//////////////////////////////////////////////////////////////////////////////
+// The whole "singular" menu system for this sketch. THERE SHOULD ONLY EVER BE ONE PER SKETCH
+OLEDMenu menu(mainPage, oled);
+
+#pragma endregion
+
+/////////////////////////////////////////////////////////////////////
+#pragma endregion
+/////////////////////////////////////////////////////////////////////

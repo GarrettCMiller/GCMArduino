@@ -31,11 +31,17 @@ https://github.com/DFRobot/DFRobot_BlunoAccess
 
 #include "ArduinoDevice.h"
 
-class Knob : public IArduinoDevice
+class Knob : public ArduinoDevice
 {
 	int16_t knob = 0, prevknob = -3;
 	bool knobChanged = false;
 public:
+	Knob()
+		: ArduinoDevice(knobPin, "Knob")
+	{
+		//Serial.println("KNOB");
+	}
+
 	int readKnob(void);
 
 	uint16_t GetValue()

@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void FingerprintReaderClass::init()
+uint8_t FingerprintReader::Initialize()
 {
 	//led.init();
 
@@ -31,7 +31,7 @@ void FingerprintReaderClass::init()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void FingerprintReaderClass::loop()
+uint8_t FingerprintReader::Update()
 {
 	static int frameCounter = 0;
 	frameCounter++;
@@ -63,7 +63,7 @@ void FingerprintReaderClass::loop()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-uint8_t FingerprintReaderClass::getFingerprintID()
+uint8_t FingerprintReader::getFingerprintID()
 {
 	uint8_t p = finger->getImage();
 	switch (p)
@@ -155,7 +155,7 @@ uint8_t FingerprintReaderClass::getFingerprintID()
 ///////////////////////////////////////////////////////////////////////////////
 
 // returns -1 if failed, otherwise returns ID #
-int FingerprintReaderClass::getFingerprintIDez()
+int FingerprintReader::getFingerprintIDez()
 {
 	uint8_t p = finger->getImage();
 	if (p != FINGERPRINT_OK)  return -1;
