@@ -11,7 +11,7 @@
 
 #include "InputCommandListener.h"
 
-#define DEVICE_NAME_MAX_LENGTH 32
+#define DEVICE_NAME_MAX_LENGTH 16
 
 #define USE_INIT_INSTEAD_OF_BEGIN
 #define USE_UPDATE_INSTEAD_OF_LOOP
@@ -144,6 +144,17 @@ public:
 		pinNumber = pin;
 
 		isOn = false;
+		SetName(_name);
+	}
+
+	void SetName(String _name)
+	{
+		if (_name.length() >= DEVICE_NAME_MAX_LENGTH)
+		{
+			Serial.print(F("Device name too long: "));
+			Serial.println(_name);
+		}
+
 		strncpy(name, _name.c_str(), DEVICE_NAME_MAX_LENGTH);
 	}
 

@@ -62,7 +62,7 @@ public:
 
 	}
 
-	LED(uint8_t _pin, ELEDState ledState = eLS_OnBlink)
+	LED(uint8_t _pin, ELEDState ledState = eLS_Off)
 		: ArduinoDevice(_pin, "LED"), eLEDState(ledState)
 	{
 		//Serial.println("LED");

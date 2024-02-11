@@ -21,20 +21,24 @@ class HeatingDevice : public SwitchDevice
 
  public:
 	 HeatingDevice(uint8_t pin,
-					const char* name = "Heater",
+					const char* name = "",
 					unsigned long timerLength = 2 TMINUTES)
 		 : SwitchDevice(pin, name, timerLength), pTempSensor(NULL)
 	 {
+		 if (name && name == '\0')
+			 SetName(F("Heater"));
 	 }
 
 	 HeatingDevice(uint8_t pin,
 					ITemperatureSensor* _pTempSensor,
 					float _minTemp, float _maxTemp,
-					const char* name = "Heater",
+					const char* name = "",
 					unsigned long timerLength = 2 TMINUTES)
 		 : SwitchDevice(pin, name, timerLength), pTempSensor(_pTempSensor),
 			minTemp(_minTemp), maxTemp(_maxTemp)
 	 {
+		 if (name == '\0')
+			 SetName(F("Heater"));
 	 }
 
 	 virtual uint8_t Initialize()

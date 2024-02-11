@@ -21,7 +21,7 @@
 
 #include "BlunoOLED.h"
 
-#define RANGEDVALUE_MAX_NAME_LENGTH	16
+#define RANGEDVALUE_MAX_NAME_LENGTH	8
 
 #pragma region Abstract Base Class
 
@@ -46,7 +46,7 @@ protected:
 	}
 
 public:
-	RangedValueBase(String newName = "<INVALID NAME>")
+	RangedValueBase(String newName = "")
 	{
 		SetName(newName);
 	}

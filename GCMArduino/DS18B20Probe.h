@@ -35,7 +35,7 @@ protected:
 	{
 		if (!sensorsBegun)
 		{
-			Serial.print("Beginning DS18B20 sensors...");
+			Serial.print(F("Beginning DS18B20 sensors..."));
 			sensors.begin();
 			sensorsBegun = true;
 		}
@@ -44,9 +44,11 @@ protected:
 	uint8_t sensorIndex;
 
 public:
-	DS18B20Probe(uint8_t _sensorIndex = 0, String name = "DS18B20")
+	DS18B20Probe(uint8_t _sensorIndex = 0, String name = "")
 		: ITemperatureSensor(name), sensorIndex(_sensorIndex)
 	{
+		if (name == "")
+			SetName(F("DS18B20"));
 	}
 
 	virtual uint8_t Initialize()

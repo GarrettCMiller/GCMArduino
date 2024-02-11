@@ -12,6 +12,10 @@
 #include "BlunoShield.h"
 #include "WaterPump.h"
 
+/// <summary>
+/// A bi-directional water pump that can reverse flow
+/// direction using an L293D H-bridge motor driver
+/// </summary>
 class BiDiWaterPump : public WaterPump
 {
  protected:
@@ -21,7 +25,7 @@ class BiDiWaterPump : public WaterPump
 	 uint8_t reverseFlowPin;
 
  public:
-	BiDiWaterPump(uint8_t pin, 
+	BiDiWaterPump(uint8_t pin,
 					int8_t _forwardFlowPin, uint8_t _reverseFlowPin,
 					bool _forwardFlow = true,
 					uint8_t initialPumpStrength = 255,
@@ -42,8 +46,8 @@ class BiDiWaterPump : public WaterPump
 
 	virtual uint8_t Update()
 	{
-		if (blunoShield.GetJoystickValue() == eJoy_Right)
-			forwardFlow = !forwardFlow;
+		//if (blunoShield.GetJoystickValue() == eJoy_Right)
+			//forwardFlow = !forwardFlow;
 
 		digitalWrite(forwardFlowPin, forwardFlow ? HIGH : LOW);
 		digitalWrite(reverseFlowPin, forwardFlow ? LOW : HIGH);

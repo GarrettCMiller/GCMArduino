@@ -7,7 +7,7 @@
 #include "OLEDMenu.h"
 #include "TemperatureSensor.h"
 
-#define DUAL_ESP_MEGA
+//#define DUAL_ESP_MEGA
 
 #ifdef DUAL_ESP_MEGA
 	#define PLAIN_PROTOCOL_SERIAL	Serial3
@@ -489,7 +489,8 @@ void BlunoShield::UpdateKnob()
 void BlunoShield::UpdatePlainProtocol()
 {
 	//Serial.println("Processing input update-pre");
-	if (bleSerial.receiveFrame())
+	//if (bleSerial.receiveFrame())
+	if (bleSerial.available())
 	{
 		//Serial.println("Processing input update");
 		switch (ipMode)

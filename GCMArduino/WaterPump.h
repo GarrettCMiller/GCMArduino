@@ -11,10 +11,14 @@
 
 #include "SwitchDevice.h"
 
+/// <summary>
+/// A SwitchDevice that has PWM support from the start to control
+/// pump strength in a water pump
+/// </summary>
 class WaterPump : public SwitchDevice
 {
  protected:
-	 ArduinoTimer offTimer;
+	 //ArduinoTimer offTimer;
 
  public:
 	 WaterPump(uint8_t pin, uint8_t initialPumpStrength = 255,
